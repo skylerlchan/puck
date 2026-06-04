@@ -1,0 +1,41 @@
+# Copy to config.yaml and edit. Secrets stay in .env, never here.
+
+bot:
+  name: "Puck"
+  emoji: ":hammer_and_wrench:"
+
+# How bold the bot is:
+#   suggest  - posts a plan only, builds nothing
+#   propose  - builds the fix + opens a PR, a human taps Accept   (default, safest)
+#   auto     - ships verified low-risk fixes itself, posts for awareness
+#   workflow - whole classes of problems fixed end-to-end
+autonomy: propose
+
+# How many fixes run at once (each in its own isolated checkout).
+concurrency: 2
+
+# Repos the bot can work in. "default" is used when no repo is specified.
+repos:
+  default:
+    path: "/Users/skyler/Projects/personal/nzt"   # absolute path on the worker
+    base_branch: "main"
+    test_command: "pytest -q"          # run to verify the fix (null to skip)
+    deploy_command: null               # e.g. "./bin/deploy"; null = merge only
+    deploy_eta_minutes: 8              # what we tell people: "live in ~8 min"
+    repro: null                        # optional repro hook -> before/after video
+    review_command: null               # optional; null = Claude self-reviews the diff
+
+# Who escalations go to, round-robin. Use @handles or Slack user ids.
+team:
+  - { slack: "@skyler", name: "Skyler" }
+  - { slack: "@edison", name: "Edison" }
+  - { slack: "@ben",    name: "Ben" }
+
+channels:
+  bugs: "#bugs"
+  features: "#features"
+
+claude_skip_permissions: true   # safe: every job runs in a throwaway worktree
+claude_model: null              # null = your default Claude Code model
+review_max_rounds: 2            # how many review->revise loops before escalating
+data_dir: ".puck"

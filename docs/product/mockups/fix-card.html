@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fix Card — PR artifact mockup</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --ink:#1c2024; --muted:#6b7280; --line:#e5e7eb;
+    --green:#117a3a; --green-bg:#e7f6ec; --green-line:#bfe6cd;
+    --amber:#9a6700; --amber-bg:#fff5d6; --amber-line:#f1e0a6;
+    --red:#c0392b; --red-bg:#fdeceb; --red-line:#f5c6c2;
+    --blue:#1f6feb; --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+    padding:40px 20px;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+  .toolbar .label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px;box-shadow:var(--shadow)}
+  .seg button{
+    border:0;background:transparent;padding:7px 12px;border-radius:7px;font-size:13px;
+    font-weight:600;color:var(--muted);cursor:pointer;transition:.12s;
+  }
+  .seg button.active{background:var(--ink);color:#fff}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+
+  /* 1. Verdict */
+  .verdict{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start}
+  .chip{
+    flex:none;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;
+    padding:5px 11px;border-radius:999px;white-space:nowrap;border:1px solid transparent;
+  }
+  .chip .dot{width:7px;height:7px;border-radius:50%}
+  .chip.verified{background:var(--green-bg);color:var(--green);border-color:var(--green-line)}
+  .chip.verified .dot{background:var(--green)}
+  .chip.review{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line)}
+  .chip.review .dot{background:var(--amber)}
+  .chip.failed{background:var(--red-bg);color:var(--red);border-color:var(--red-line)}
+  .chip.failed .dot{background:var(--red)}
+  .verdict .summary{font-size:16.5px;font-weight:650;letter-spacing:-.01em}
+  .verdict .sub{font-size:13px;color:var(--muted);margin-top:3px}
+
+  .section{padding:20px 22px;border-bottom:1px solid var(--line)}
+  .section:last-child{border-bottom:0}
+  .sec-h{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  .sec-h .n{display:inline-flex;width:18px;height:18px;border-radius:50%;background:#eef0f2;color:var(--muted);font-size:11px;align-items:center;justify-content:center;font-weight:700}
+
+  /* 2. Before -> After */
+  .baf{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:stretch}
+  .col{border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+  .col-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--muted)}
+  .col.target .col-h{background:#f3f6ff;color:var(--blue)}
+  .col.before .col-h{background:var(--red-bg);color:var(--red)}
+  .col.after .col-h{background:var(--green-bg);color:var(--green)}
+  .col-body{padding:10px;font-size:12.5px;color:var(--ink);flex:1;display:flex;flex-direction:column;gap:8px}
+  .col.target .col-body{justify-content:center}
+
+  /* tiny phone screens */
+  .phone{background:#0e1116;border-radius:10px;padding:8px 7px;aspect-ratio:9/15;display:flex;flex-direction:column;gap:6px;position:relative}
+  .phone .scr{background:#fff;border-radius:6px;flex:1;padding:8px;display:flex;flex-direction:column;gap:6px;font-size:9px;color:#222}
+  .ph-title{font-weight:700;font-size:10px}
+  .ph-field{background:#eef0f2;border-radius:4px;height:14px}
+  .ph-btn{border-radius:4px;height:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;margin-top:2px}
+  .ph-btn.dead{background:#9aa1a9}
+  .ph-btn.live{background:#1f6feb}
+  .ph-note{font-size:8.5px;font-weight:600;display:flex;gap:3px;align-items:center}
+  .ph-note.bad{color:var(--red)} .ph-note.good{color:var(--green)}
+  .ph-welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+  .ph-avatar{width:22px;height:22px;border-radius:50%;background:#cde6d6}
+
+  .metric-row{display:flex;align-items:baseline;gap:6px}
+  .metric-big{font-size:18px;font-weight:750}
+  .metric-big.bad{color:var(--red)} .metric-big.good{color:var(--green)}
+  .target-pill{display:inline-block;font-size:10.5px;font-weight:700;color:var(--blue);background:#eaf1ff;border-radius:999px;padding:2px 8px}
+
+  /* 3 & 4 lists */
+  ol.steps{margin:0;padding-left:18px;font-size:13px;color:var(--ink)}
+  ol.steps li{margin:3px 0}
+  .kv{font-size:13px;margin:6px 0}
+  .kv b{font-weight:650}
+  .pill{display:inline-block;font-size:11.5px;background:#eef0f2;border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .testline{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;margin:4px 0}
+  .testline .ok{color:var(--green)} .testline .no{color:var(--red)}
+
+  details.diff{margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  details.diff summary{cursor:pointer;padding:9px 12px;font-size:12.5px;font-weight:600;background:#fafbfc;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  details.diff summary::-webkit-details-marker{display:none}
+  details.diff summary .chev{color:var(--muted);font-size:11px}
+  pre.code{margin:0;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.55;overflow:auto;background:#fff;border-top:1px solid var(--line)}
+  pre.code .add{background:#e7f6ec;display:block} pre.code .del{background:#fdeceb;display:block}
+  pre.code .ctx{display:block;color:#6b7280}
+
+  /* 5. Safety */
+  .safety{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .stat .t{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .stat .v{font-size:15px;font-weight:700;margin-top:2px}
+  .stat .v.green{color:var(--green)} .stat .v.red{color:var(--red)}
+  .flags{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .flag{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+  .flag.none{background:var(--green-bg);color:var(--green)}
+  .flag.risk{background:var(--amber-bg);color:var(--amber)}
+
+  /* 6. Actions */
+  .actions{padding:18px 22px;background:#fafbfc;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .gate{font-size:12px;color:var(--amber);font-weight:600;width:100%;margin-bottom:4px;display:none}
+  .gate.show{display:block}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13.5px;font-weight:650;padding:9px 16px;border-radius:9px;cursor:pointer;transition:.12s}
+  .btn:hover{background:#f3f4f6}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.primary.disabled{background:#cbd2da;border-color:#cbd2da;color:#fff;cursor:not-allowed}
+  .btn.ghost{color:var(--muted)}
+  .spacer{flex:1}
+
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:18px}
+  @media(max-width:640px){.baf{grid-template-columns:1fr}.safety{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="toolbar">
+    <span class="label">Trust state</span>
+    <div class="seg" id="seg">
+      <button data-state="verified" class="active">Verified · low risk</button>
+      <button data-state="risk">Verified · risk flag</button>
+      <button data-state="review">Needs review</button>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <!-- 1. VERDICT -->
+    <div class="verdict">
+      <span class="chip verified" id="chip"><span class="dot"></span><span id="chipText">Verified</span></span>
+      <div>
+        <div class="summary">Login button did nothing on mobile Safari — now submits correctly.</div>
+        <div class="sub" id="verdictSub">Reproduced, fixed, and all tests pass. Safe to merge.</div>
+      </div>
+    </div>
+
+    <!-- 2. BEFORE -> AFTER -->
+    <div class="section">
+      <div class="sec-h"><span class="n">2</span> Before → After</div>
+      <div class="baf">
+        <div class="col target">
+          <div class="col-h">Target — what I asked</div>
+          <div class="col-body">
+            <div>Tapping <b>Login</b> should submit the form and take me to the dashboard.</div>
+            <div><span class="target-pill">goal: form submits on tap</span></div>
+          </div>
+        </div>
+        <div class="col before">
+          <div class="col-h">Before — baseline</div>
+          <div class="col-body">
+            <div class="phone"><div class="scr">
+              <div class="ph-title">Sign in</div>
+              <div class="ph-field"></div><div class="ph-field"></div>
+              <div class="ph-btn dead">Login</div>
+              <div class="ph-note bad">✕ tap does nothing</div>
+            </div></div>
+            <div>No network request fires on tap.</div>
+          </div>
+        </div>
+        <div class="col after">
+          <div class="col-h">After — fixed</div>
+          <div class="col-body">
+            <div class="phone"><div class="scr">
+              <div class="ph-welcome">
+                <div class="ph-avatar"></div>
+                <div class="ph-title">Welcome back</div>
+                <div class="ph-note good">✓ submitted → dashboard</div>
+              </div>
+            </div></div>
+            <div>Form submits; redirects on success.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. REPRODUCED -->
+    <div class="section">
+      <div class="sec-h"><span class="n">3</span> How it was reproduced</div>
+      <ol class="steps">
+        <li>Open <code>/login</code> in iOS Safari (or responsive mobile emulation).</li>
+        <li>Enter credentials, tap <b>Login</b>.</li>
+        <li>Observe: no submit, no network request, no error.</li>
+      </ol>
+      <div class="kv" style="margin-top:10px"><b>Trigger:</b> a transparent overlay intercepted the tap on touch devices.</div>
+      <div class="testline"><span class="no">✕ before</span> &nbsp;login.mobile.spec.ts — “submits on tap” <span class="no">FAILED</span></div>
+    </div>
+
+    <!-- 4. FIXED -->
+    <div class="section">
+      <div class="sec-h"><span class="n">4</span> How it was fixed</div>
+      <div class="kv"><b>Root cause:</b> overlay <code>z-index</code> sat above the form and captured pointer events.</div>
+      <div class="kv"><b>Approach:</b> lowered the overlay’s <code>z-index</code> and set <code>pointer-events:none</code> on its idle state.</div>
+      <div class="kv"><b>Files:</b> <span class="pill">LoginForm.tsx</span> <span class="pill">overlay.css</span></div>
+      <div class="testline"><span class="ok">✓ after</span> &nbsp;login.mobile.spec.ts — “submits on tap” <span class="ok">PASSED</span> (new)</div>
+      <details class="diff">
+        <summary>View diff · 2 files, +12 −6 <span class="chev">▼</span></summary>
+        <pre class="code"><span class="ctx">  // overlay.css</span>
+<span class="del">- .overlay { z-index: 9999; }</span>
+<span class="add">+ .overlay { z-index: 10; }</span>
+<span class="add">+ .overlay:not(.active) { pointer-events: none; }</span>
+<span class="ctx">  // LoginForm.tsx</span>
+<span class="del">- &lt;button onClick={submit}&gt;Login&lt;/button&gt;</span>
+<span class="add">+ &lt;button type="submit" onClick={submit}&gt;Login&lt;/button&gt;</span></pre>
+      </details>
+    </div>
+
+    <!-- 5. SAFETY -->
+    <div class="section">
+      <div class="sec-h"><span class="n">5</span> Safety</div>
+      <div class="safety">
+        <div class="stat"><div class="t">Tests</div><div class="v green" id="statTests">142 passed · 1 added</div></div>
+        <div class="stat"><div class="t">Suite</div><div class="v green" id="statSuite">Green</div></div>
+        <div class="stat"><div class="t">Scope</div><div class="v" id="statScope">2 files · 18 lines</div></div>
+      </div>
+      <div class="flags" id="flags">
+        <span class="flag none">no risk flags</span>
+      </div>
+    </div>
+
+    <!-- 6. ACTIONS -->
+    <div class="actions" id="actions">
+      <div class="gate" id="gate">⚠ Touches auth — expand Before → After before merging.</div>
+      <button class="btn primary" id="btnMerge">Merge</button>
+      <button class="btn" id="btnWatch">Merge behind flag</button>
+      <div class="spacer"></div>
+      <button class="btn ghost">Ask a question</button>
+      <button class="btn ghost">Reject</button>
+    </div>
+
+  </div>
+
+  <div class="foot">Fix Card — interactive mockup · switch trust state above to see button logic change</div>
+</div>
+
+<script>
+  const states = {
+    verified: {
+      chip:'verified', chipText:'Verified ✓',
+      sub:'Reproduced, fixed, and all tests pass. Safe to merge.',
+      tests:'142 passed · 1 added', testsClass:'green',
+      suite:'Green', suiteClass:'green',
+      scope:'2 files · 18 lines',
+      flags:'<span class="flag none">no risk flags</span>',
+      gate:false, mergeText:'Merge', mergeDisabled:false, watch:true
+    },
+    risk: {
+      chip:'verified', chipText:'Verified ✓',
+      sub:'Fix verified, but this change touches authentication — give it a look.',
+      tests:'151 passed · 2 added', testsClass:'green',
+      suite:'Green', suiteClass:'green',
+      scope:'4 files · 47 lines',
+      flags:'<span class="flag risk">⚑ auth</span><span class="flag risk">⚑ public-api</span>',
+      gate:true, mergeText:'Merge', mergeDisabled:false, watch:true
+    },
+    review: {
+      chip:'review', chipText:'Needs your eyes',
+      sub:'Couldn’t auto-verify — 1 test still failing. Review before merging.',
+      tests:'139 passed · 1 failing', testsClass:'red',
+      suite:'Red', suiteClass:'red',
+      scope:'3 files · 26 lines',
+      flags:'<span class="flag risk">⚑ unverified fix</span>',
+      gate:false, mergeText:'Merge', mergeDisabled:true, watch:false
+    }
+  };
+
+  function apply(key){
+    const s = states[key];
+    const chip = document.getElementById('chip');
+    chip.className = 'chip ' + s.chip;
+    document.getElementById('chipText').textContent = s.chipText;
+    document.getElementById('verdictSub').textContent = s.sub;
+
+    const t = document.getElementById('statTests'); t.textContent = s.tests; t.className = 'v ' + s.testsClass;
+    const su = document.getElementById('statSuite'); su.textContent = s.suite; su.className = 'v ' + s.suiteClass;
+    document.getElementById('statScope').textContent = s.scope;
+    document.getElementById('flags').innerHTML = s.flags;
+
+    document.getElementById('gate').className = 'gate' + (s.gate ? ' show' : '');
+
+    const m = document.getElementById('btnMerge');
+    m.textContent = s.mergeText;
+    m.className = 'btn primary' + (s.mergeDisabled ? ' disabled' : '');
+    document.getElementById('btnWatch').style.display = s.watch ? '' : 'none';
+
+    document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('active', b.dataset.state===key));
+  }
+
+  document.querySelectorAll('#seg button').forEach(b=>{
+    b.addEventListener('click', ()=>apply(b.dataset.state));
+  });
+  apply('verified');
+</script>
+</body>
+</html>

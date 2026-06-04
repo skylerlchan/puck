@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fix Bot — Slack thread mockup</title>
+<style>
+  :root{
+    --slk:#1d1c1d; --muted:#616061; --line:#e2e2e2; --bg:#fff;
+    --green:#007a5a; --green-d:#148567; --blue:#1264a3; --red:#e01e5a;
+    --aubg:#fef3c7; --au:#92610a;
+    --sidebar:#3f0e40;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#f8f8f8;color:var(--slk);
+    font-family:"Lato",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:28px 16px}
+  .frame{max-width:760px;margin:0 auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+
+  .toolbar{max-width:760px;margin:0 auto 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .toolbar .lbl{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:9px;padding:3px}
+  .seg button{border:0;background:transparent;padding:7px 12px;border-radius:6px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+  .seg button.active{background:var(--slk);color:#fff}
+
+  .chan-h{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--line);font-weight:800;font-size:15px}
+  .chan-h .hash{color:var(--muted);font-weight:700}
+  .chan-h .meta{color:var(--muted);font-weight:400;font-size:12.5px;margin-left:6px}
+
+  .msgs{padding:8px 0}
+  .msg{display:flex;gap:10px;padding:9px 18px}
+  .msg:hover{background:#f8f8f8}
+  .av{width:36px;height:36px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:15px}
+  .av.user{background:#4a90d9}
+  .av.bug{background:#e8527a;border-radius:8px}
+  .av.feat{background:#7c5cff}
+  .body{flex:1;min-width:0}
+  .line1{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+  .name{font-weight:800;font-size:14.5px}
+  .app{font-size:10px;font-weight:700;background:#e8e8e8;color:#616061;border-radius:3px;padding:1px 5px;letter-spacing:.02em}
+  .ts{font-size:12px;color:var(--muted)}
+  .txt{font-size:14.5px;line-height:1.46;margin-top:2px}
+  .txt code{background:#f3f0f0;color:#c0392b;border-radius:4px;padding:1px 5px;font-size:12.5px;font-family:ui-monospace,Menlo,monospace}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;border-radius:999px;padding:3px 10px;margin-top:2px}
+  .status.ok{background:#e3f3ee;color:var(--green)}
+  .status.warn{background:var(--aubg);color:var(--au)}
+  .status.feat{background:#efe9ff;color:#5b3df0}
+  .status .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  .shot{margin-top:7px;width:120px;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:9px}
+  .shot .cap{padding:4px 6px;color:var(--muted);background:#fafafa;border-top:1px solid var(--line)}
+  .shot .mini{height:64px;background:linear-gradient(160deg,#eef2f7,#e3e9f0);display:flex;align-items:center;justify-content:center;color:#9aa3ad;font-weight:700}
+
+  /* video tiles */
+  .vids{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+  .vid{flex:1;min-width:210px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .vid-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:7px 10px;display:flex;justify-content:space-between;align-items:center}
+  .vid.before .vid-h{background:#fdeceb;color:var(--red)}
+  .vid.after  .vid-h{background:#e3f3ee;color:var(--green)}
+  .vid-h .dur{font-weight:700;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .stage{position:relative;aspect-ratio:16/11;background:#0d1117;overflow:hidden}
+  .phone{position:absolute;inset:0;margin:auto;width:46%;aspect-ratio:9/16;background:#000;border-radius:12px;padding:6px;top:8%;bottom:8%}
+  .scr{position:relative;width:100%;height:100%;background:#fff;border-radius:7px;overflow:hidden}
+  .layer{position:absolute;inset:0;padding:10px 9px;display:flex;flex-direction:column;gap:6px}
+  .lh{font-weight:800;font-size:10px;color:#222}
+  .fld{height:13px;background:#eef0f2;border-radius:4px}
+  .pbtn{height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8.5px;font-weight:800;margin-top:3px}
+  .pbtn.blue{background:#1264a3}.pbtn.grey{background:#9aa1a9}
+  .ripple{position:absolute;left:50%;bottom:14%;width:30px;height:30px;border-radius:50%;background:#1264a3;transform:translateX(-50%) scale(.2);opacity:0}
+  .toast{position:absolute;left:50%;top:46%;transform:translateX(-50%);background:#e01e5a;color:#fff;font-size:8px;font-weight:800;padding:3px 7px;border-radius:5px;opacity:0;white-space:nowrap}
+  .dash{align-items:center;justify-content:center;text-align:center;opacity:0}
+  .ava{width:26px;height:26px;border-radius:50%;background:#bfe6cd;margin:0 auto}
+  .ok-note{color:var(--green);font-weight:800;font-size:9px}
+  .spin{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px;border:3px solid #d9e2ec;border-top-color:#1264a3;border-radius:50%;opacity:0}
+  .play{position:absolute;left:10px;bottom:9px;display:flex;align-items:center;gap:7px;z-index:5}
+  .play .tri{width:0;height:0;border-left:11px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+  .bar{position:absolute;left:0;bottom:0;height:3px;background:#1264a3;width:0}
+
+  /* animations */
+  .playing .ripple{animation:rip 4s linear infinite}
+  .playing.before .toast{animation:toast 4s linear infinite}
+  .playing.after .layer.login{animation:loginout 4s linear infinite}
+  .playing.after .dash{animation:dashin 4s linear infinite}
+  .playing.after .spin{animation:spin 4s linear infinite, rot .8s linear infinite}
+  .playing .bar{animation:bar 4s linear infinite}
+  /* feature dark-mode mock */
+  .darkover{position:absolute;inset:0;background:#10131a;opacity:0;border-radius:7px;display:flex;align-items:center;justify-content:center}
+  .darkover .lh{color:#fff}
+  .toggle{width:24px;height:13px;border-radius:99px;background:#cbd2da;position:relative;align-self:flex-end}
+  .toggle .knob{position:absolute;top:1.5px;left:1.5px;width:10px;height:10px;border-radius:50%;background:#fff;transition:.2s}
+  .playing.mock .darkover{animation:darkin 4s linear infinite}
+  .playing.mock .knob{animation:knob 4s linear infinite}
+
+  @keyframes rip{0%,32%{transform:translateX(-50%) scale(.2);opacity:0}40%{opacity:.55}58%{transform:translateX(-50%) scale(2.4);opacity:0}100%{opacity:0}}
+  @keyframes toast{0%,44%{opacity:0}54%{opacity:1}82%{opacity:1}90%,100%{opacity:0}}
+  @keyframes loginout{0%,48%{opacity:1}60%{opacity:0}96%{opacity:0}100%{opacity:1}}
+  @keyframes dashin{0%,54%{opacity:0}70%{opacity:1}93%{opacity:1}100%{opacity:0}}
+  @keyframes spin{0%,49%{opacity:0}55%{opacity:1}67%{opacity:0}100%{opacity:0}}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  @keyframes bar{from{width:0}to{width:100%}}
+  @keyframes darkin{0%,48%{opacity:0}64%{opacity:1}93%{opacity:1}100%{opacity:0}}
+  @keyframes knob{0%,48%{left:1.5px}64%,100%{left:11px}}
+
+  /* attachment text block */
+  .att{margin-top:11px;border-left:4px solid #dcdcdc;padding:2px 0 2px 12px}
+  .att.ok{border-color:var(--green)} .att.warn{border-color:var(--au)} .att.feat{border-color:#7c5cff}
+  .att .row{font-size:13.5px;line-height:1.5;margin:2px 0}
+  .att b{font-weight:800}
+  .safe{font-size:12.5px;color:var(--muted);margin-top:6px;font-family:ui-monospace,Menlo,monospace}
+  .safe .g{color:var(--green);font-weight:700}.safe .r{color:var(--red);font-weight:700}
+
+  .btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .b{border:1px solid #c9c9c9;background:#fff;color:var(--slk);font-size:13px;font-weight:800;padding:8px 14px;border-radius:7px;cursor:pointer}
+  .b:hover{background:#f4f4f4}
+  .b.green{background:var(--green);border-color:var(--green);color:#fff}
+  .b.green:hover{background:var(--green-d)}
+  .b.disabled{background:#e6e6e6;border-color:#e6e6e6;color:#9aa0a6;cursor:not-allowed}
+  .ppl{display:inline-flex;gap:5px;margin-left:2px}
+  .ppl .p{font-size:12.5px;font-weight:800;color:var(--blue)}
+
+  .hidden{display:none}
+  .foot{max-width:760px;margin:14px auto 0;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="lbl">Scenario</span>
+  <div class="seg" id="seg">
+    <button data-s="fixed" class="active">🐛 Auto-fixed</button>
+    <button data-s="human">⚠ Needs a human</button>
+    <button data-s="feature">✨ Feature mockup</button>
+  </div>
+</div>
+
+<div class="frame">
+  <div class="chan-h"><span class="hash">#</span> <span id="chanName">bugs</span> <span class="meta" id="chanMeta">Report anything broken — @bugbot takes it from here</span></div>
+  <div class="msgs">
+
+    <!-- USER REPORT -->
+    <div class="msg">
+      <div class="av user">E</div>
+      <div class="body">
+        <div class="line1"><span class="name">Edison</span><span class="ts">9:41 AM</span></div>
+        <div class="txt" id="reportTxt">the login button does nothing when I tap it on my phone 😩 works fine on desktop</div>
+        <div class="shot" id="reportShot"><div class="mini">screenshot.png</div><div class="cap">mobile-login.png</div></div>
+      </div>
+    </div>
+
+    <!-- ===== STATE: AUTO-FIXED ===== -->
+    <div class="msg state state-fixed">
+      <div class="av bug">🐛</div>
+      <div class="body">
+        <div class="line1"><span class="name">bugbot</span><span class="app">APP</span><span class="ts">9:43 AM</span></div>
+        <div class="status ok"><span class="dot"></span> Fixed &amp; verified</div>
+        <div class="txt"><b>Login button did nothing on mobile</b> — reproduced, fixed, all tests green.</div>
+
+        <div class="vids">
+          <div class="vid before playing">
+            <div class="vid-h">Before <span class="dur">0:06</span></div>
+            <div class="stage">
+              <div class="phone"><div class="scr">
+                <div class="layer login">
+                  <div class="lh">Sign in</div><div class="fld"></div><div class="fld"></div>
+                  <div class="pbtn grey">Login</div>
+                </div>
+                <div class="ripple"></div>
+                <div class="toast">✕ nothing happens</div>
+              </div></div>
+              <div class="play"><span class="tri"></span></div><div class="bar"></div>
+            </div>
+          </div>
+          <div class="vid after playing">
+            <div class="vid-h">After <span class="dur">0:05</span></div>
+            <div class="stage">
+              <div class="phone"><div class="scr">
+                <div class="layer login">
+                  <div class="lh">Sign in</div><div class="fld"></div><div class="fld"></div>
+                  <div class="pbtn blue">Login</div>
+                </div>
+                <div class="spin"></div>
+                <div class="layer dash">
+                  <div class="ava"></div><div class="lh">Welcome back</div>
+                  <div class="ok-note">✓ dashboard</div>
+                </div>
+                <div class="ripple"></div>
+              </div></div>
+              <div class="play"><span class="tri"></span></div><div class="bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="att ok">
+          <div class="row"><b>Root cause:</b> a transparent overlay captured the tap on touch devices.</div>
+          <div class="row"><b>Fix:</b> lowered overlay <code>z-index</code> + <code>pointer-events:none</code> &nbsp;·&nbsp; 2 files, +12 −6</div>
+          <div class="safe">tests <span class="g">142 passed · 1 added</span> · suite <span class="g">green</span> · no risk flags</div>
+        </div>
+
+        <div class="btns">
+          <button class="b green">✅ Merge</button>
+          <button class="b">🔁 Ask / revise</button>
+          <button class="b">👤 Send to engineer</button>
+          <button class="b">❌ Reject</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STATE: NEEDS A HUMAN ===== -->
+    <div class="msg state state-human hidden">
+      <div class="av bug">🐛</div>
+      <div class="body">
+        <div class="line1"><span class="name">bugbot</span><span class="app">APP</span><span class="ts">9:44 AM</span></div>
+        <div class="status warn"><span class="dot"></span> Couldn’t auto-fix</div>
+        <div class="txt"><b>Checkout total is wrong for EU VAT.</b> I reproduced it and have a lead, but I’m not confident enough to ship a fix.</div>
+
+        <div class="vids">
+          <div class="vid before playing">
+            <div class="vid-h">Before <span class="dur">0:08</span></div>
+            <div class="stage">
+              <div class="phone"><div class="scr">
+                <div class="layer login">
+                  <div class="lh">Cart</div><div class="fld"></div>
+                  <div class="row" style="font-size:9px;margin-top:auto">Total: <b style="color:#e01e5a">€119.00</b></div>
+                  <div class="row" style="font-size:8px;color:#e01e5a">VAT applied twice</div>
+                </div>
+                <div class="ripple"></div>
+                <div class="toast">✕ wrong total</div>
+              </div></div>
+              <div class="play"><span class="tri"></span></div><div class="bar"></div>
+            </div>
+          </div>
+          <div class="vid after">
+            <div class="vid-h" style="background:#f3f4f6;color:#616061">After <span class="dur">—</span></div>
+            <div class="stage" style="background:#161b22;display:flex;align-items:center;justify-content:center">
+              <div style="color:#8b949e;font-size:11px;text-align:center;padding:16px;font-weight:700">no verified fix yet<br><span style="font-weight:400">handing off with my notes</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="att warn">
+          <div class="row"><b>What I found:</b> VAT looks double-applied in <code>pricing/vat.ts</code> for EU regions, but the test fixtures don’t cover this case — I couldn’t confirm.</div>
+          <div class="row"><b>Where I got stuck:</b> can’t tell if it’s the rate table or the rounding step. Needs a human eye.</div>
+          <div class="safe">branch <span class="g">draft/eu-vat-fix</span> ready · repro <span class="g">attached</span> · tests <span class="r">1 failing</span></div>
+        </div>
+
+        <div class="txt" style="margin-top:11px">Routing to an engineer → <span class="ppl"><span class="p">@skyler</span><span class="p">@edison</span><span class="p">@ben</span></span></div>
+        <div class="btns">
+          <button class="b green">🙋 I’ll take it</button>
+          <button class="b">📎 Open my draft branch</button>
+          <button class="b">🔁 Try again with a hint</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STATE: FEATURE ===== -->
+    <div class="msg state state-feature hidden">
+      <div class="av feat">✨</div>
+      <div class="body">
+        <div class="line1"><span class="name">featurebot</span><span class="app">APP</span><span class="ts">9:46 AM</span></div>
+        <div class="status feat"><span class="dot"></span> Mockup ready</div>
+        <div class="txt"><b>Dark mode for Settings.</b> Here’s a quick mockup — not built yet. Tell me what to change.</div>
+
+        <div class="vids">
+          <div class="vid before playing">
+            <div class="vid-h" style="background:#eef2f7;color:#616061">Now <span class="dur">0:04</span></div>
+            <div class="stage">
+              <div class="phone"><div class="scr">
+                <div class="layer login">
+                  <div class="lh">Settings</div><div class="fld"></div><div class="fld"></div>
+                  <div class="row" style="font-size:9px;margin-top:6px">Appearance: Light</div>
+                </div>
+              </div></div>
+              <div class="play"><span class="tri"></span></div><div class="bar"></div>
+            </div>
+          </div>
+          <div class="vid after mock playing">
+            <div class="vid-h" style="background:#efe9ff;color:#5b3df0">Mockup <span class="dur">0:06</span></div>
+            <div class="stage">
+              <div class="phone"><div class="scr">
+                <div class="layer login">
+                  <div class="lh">Settings</div><div class="fld"></div><div class="fld"></div>
+                  <div class="row" style="font-size:9px;margin-top:6px;display:flex;justify-content:space-between;align-items:center">Dark mode <span class="toggle"><span class="knob"></span></span></div>
+                </div>
+                <div class="darkover"><div style="text-align:center"><div class="lh">Settings</div><div style="color:#8b949e;font-size:9px;margin-top:4px">🌙 dark on</div></div></div>
+                <div class="ripple"></div>
+              </div></div>
+              <div class="play"><span class="tri"></span></div><div class="bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="att feat">
+          <div class="row"><b>Scope:</b> a theme toggle in Settings + a dark palette across the app.</div>
+          <div class="row"><b>If you approve,</b> I’ll build it for real, run it, and post a before/after PR like a bug fix.</div>
+          <div class="safe">estimate <span class="g">~6 files</span> · no data changes</div>
+        </div>
+
+        <div class="btns">
+          <button class="b green">🛠 Build it for real</button>
+          <button class="b">✏️ Make it better</button>
+          <button class="b">❌ Discard</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="foot">Fix Bot — Slack thread mockup · the “videos” are CSS-animated to show the before/after motion · switch scenarios above</div>
+
+<script>
+  const cfg = {
+    fixed:   {chan:'bugs',     meta:'Report anything broken — @bugbot takes it from here',
+              who:'Edison', txt:'the login button does nothing when I tap it on my phone 😩 works fine on desktop', shot:true},
+    human:   {chan:'bugs',     meta:'Report anything broken — @bugbot takes it from here',
+              who:'Priya', txt:'EU customers are getting charged the wrong total at checkout — VAT looks doubled', shot:false},
+    feature: {chan:'features', meta:'Ask for anything — @featurebot mocks it up first',
+              who:'Skyler', txt:'can we get a dark mode for the settings page?', shot:false}
+  };
+  function show(s){
+    const c = cfg[s];
+    document.getElementById('chanName').textContent = c.chan;
+    document.getElementById('chanMeta').textContent = c.meta;
+    document.querySelector('.av.user').textContent = c.who[0];
+    document.getElementById('reportTxt').textContent = c.txt;
+    document.getElementById('reportShot').style.display = c.shot ? '' : 'none';
+    document.querySelectorAll('.state').forEach(e=>e.classList.add('hidden'));
+    document.querySelector('.state-'+s).classList.remove('hidden');
+    document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('active', b.dataset.s===s));
+  }
+  document.querySelectorAll('#seg button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.s)));
+  show('fixed');
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Puck — Tier-2 "Virtual Desktop Stage": a HIDDEN Linux desktop the agent fully
+# controls (type, click, screenshot, video) via Anthropic computer use.
+#
+# This is the part of your computer you don't see: a full Ubuntu desktop running
+# inside Docker (Xvfb virtual display + window manager + xdotool + scrot). Nothing
+# renders on your Mac — but you CAN peek through the browser if you want.
+#
+# Launch:  ANTHROPIC_API_KEY=sk-ant-... docker compose -f vd/docker-compose.yml up
+# Use it:  open http://localhost:8080   (chat on the left, the live desktop on the right)
+# Peek:    open http://localhost:6080/vnc.html   (desktop only)
+# Stop:    docker compose -f vd/docker-compose.yml down
+#
+# The image is multi-arch — it pulls the NATIVE arm64 build on Apple Silicon (no
+# emulation). Only an Anthropic API key is needed; no Claude Pro subscription.
+services:
+  desktop:
+    image: ghcr.io/anthropics/anthropic-quickstarts:computer-use-demo-latest
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ${HOME}/.anthropic:/home/computeruse/.anthropic
+    ports:
+      - "5900:5900"   # raw VNC
+      - "6080:6080"   # noVNC — watch the hidden desktop in a browser
+      - "8501:8501"   # Streamlit chat only
+      - "8080:8080"   # combined chat + desktop (recommended entry point)
